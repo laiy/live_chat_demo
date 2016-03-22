@@ -65,7 +65,6 @@ int main() {
                 FD_SET(pipes[i][0], &allset);
                 if (pipes[i][0] > maxfd)
                     maxfd = pipes[i][0];
-                continue;
             }
         }
         for (i = 0; i <= maxi; i++) {
