@@ -16,7 +16,6 @@
 
 int client[MAX_CONNECTIONS];
 static void *boardcast(void *);
-pthread_mutex_t client_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int main() {
     int listenfd, i;
@@ -36,13 +35,11 @@ int main() {
     for (;;) {
         clilen = sizeof(client_address);
         connfd = accept(listenfd, (struct sockaddr *)&client_address, &clilen);
-        pthread_mutex_lock(&client_mutex);
         for (i = 0; i < MAX_CONNECTIONS; i++)
             if (client[i] < 0) {
                 client[i] = connfd;
                 break;
             }
-        pthread_mutex_unlock(&client_mutex);
         if (i == MAX_CONNECTIONS)
             error("too many clients");
         pthread_create(&tid, NULL, &boardcast, (void *)connfd);
@@ -56,13 +53,11 @@ static void *boardcast(void *arg) {
     int j, tmpfd;
     pthread_detach(pthread_self());
     while ((n = read((long)arg, buf, MAXLINE)) > 0) {
-        pthread_mutex_lock(&client_mutex);
         for (j = 0; j < MAX_CONNECTIONS; j++) {
             if ((tmpfd = client[j]) < 0 || (long)arg == tmpfd)
                 continue;
             write(tmpfd, buf, n);
         }
-        pthread_mutex_unlock(&client_mutex);
     }
     close((long)arg);
     return NULL;
